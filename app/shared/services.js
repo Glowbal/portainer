@@ -48,6 +48,29 @@ angular.module('portainer.services', ['ngResource', 'ngSanitize'])
         remove: { method: 'DELETE', params: {id: '@id'} }
       });
     }])
+    .factory('ServiceLogs', ['$resource', '$http', 'Settings', function ContainerLogsFactory($resource, $http, Settings) {
+        'use strict';
+        // http://docs.docker.com/reference/api/docker_remote_api_<%= remoteApiVersion %>/#get-container-logs
+        return {
+            get: function (id, params, callback) {
+                $http({
+                    method: 'GET',
+                    url: Settings.url + '/services/' + id + '/logs',
+                    params: {
+                        'details': params.details || false,
+                        'follow': params.follow || false,
+                        'stdout': params.stdout || false,
+                        'stderr': params.stderr || false,
+                        'since': params.since || 0,
+                        'timestamps': params.timestamps || false,
+                        'tail': params.tail || 'all'
+                    }
+                }).success(callback).error(function (data, status, headers, config) {
+                    console.log(error, data);
+                });
+            }
+        };
+    }])
     .factory('Task', ['$resource', 'Settings', function TaskFactory($resource, Settings) {
       'use strict';
       // https://docs.docker.com/engine/reference/api/docker_remote_api_<%= remoteApiVersion %>/#/3-9-services

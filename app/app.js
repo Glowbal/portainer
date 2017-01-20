@@ -28,6 +28,7 @@ angular.module('portainer', [
   'image',
   'main',
   'service',
+  'serviceLogs',
   'services',
   'settings',
   'sidebar',
@@ -420,6 +421,22 @@ angular.module('portainer', [
         "content": {
           templateUrl: 'app/components/service/service.html',
           controller: 'ServiceController'
+        },
+        "sidebar": {
+          templateUrl: 'app/components/sidebar/sidebar.html',
+          controller: 'SidebarController'
+        }
+      },
+      data: {
+        requiresLogin: true
+      }
+    })
+    .state('serviceLogs', {
+      url: "^/service/:id/logs",
+      views: {
+        "content": {
+          templateUrl: 'app/components/serviceLogs/servicelogs.html',
+          controller: 'ServiceLogsController'
         },
         "sidebar": {
           templateUrl: 'app/components/sidebar/sidebar.html',

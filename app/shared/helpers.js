@@ -101,4 +101,12 @@ angular.module('portainer.helpers', [])
       return bindings;
     }
   };
+}])
+.factory('VersionHelper', [function TemplateHelperFactory() {
+  'use strict';
+  return {
+    isMinVersion: function(version, requiredVersion) {
+      return (parseFloat(version) >= parseFloat(requiredVersion));
+    }
+  };
 }]);
