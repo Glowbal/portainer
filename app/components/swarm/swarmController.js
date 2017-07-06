@@ -1,6 +1,6 @@
 angular.module('swarm', [])
-.controller('SwarmController', ['$q', '$scope', 'SystemService', 'NodeService', 'Pagination', 'Notifications',
-function ($q, $scope, SystemService, NodeService, Pagination, Notifications) {
+.controller('SwarmController', ['$q', '$scope', 'Swarm', 'ModalService', 'SystemService', 'NodeService', 'Pagination', 'Notifications', 'Authentication',
+function ($q, $scope, Swarm, ModalService, SystemService, NodeService, Pagination, Notifications, Authentication) {
   $scope.state = {};
   $scope.state.pagination_count = Pagination.getPaginationCount('swarm_nodes');
   $scope.sortType = 'Spec.Role';
@@ -41,7 +41,7 @@ function ($q, $scope, SystemService, NodeService, Pagination, Notifications) {
     // If connected to a replica, information for node1 is available at element #5
     // The next 10 elements are information related to the node
     var node_offset = info[0][1] === 'primary' ? 4 : 5;
-    for (i = 0; i < node_count; i++) {
+    for (var i = 0; i < node_count; i++) {
       extractNodeInfo(info, node_offset);
       node_offset += 9;
     }
@@ -74,10 +74,16 @@ function ($q, $scope, SystemService, NodeService, Pagination, Notifications) {
   function initView() {
     $('#loadingViewSpinner').show();
     var provider = $scope.applicationState.endpoint.mode.provider;
+
+    var userDetails = Authentication.getUserDetails();
+    var isAdmin = userDetails.role === 1 ? true: false;
+    $scope.isAdmin = isAdmin;
+
     $q.all({
       version: SystemService.version(),
       info: SystemService.info(),
-      nodes: provider !== 'DOCKER_SWARM_MODE' || NodeService.nodes()
+      nodes: provider !== 'DOCKER_SWARM_MODE' || NodeService.nodes(),
+      swarm: (provider !== 'DOCKER_SWARM_MODE' || !isAdmin) || Swarm.get()
     })
     .then(function success(data) {
       $scope.docker = data.version;
@@ -86,6 +92,10 @@ function ($q, $scope, SystemService, NodeService, Pagination, Notifications) {
         var nodes = data.nodes;
         processTotalCPUAndMemory(nodes);
         $scope.nodes = nodes;
+
+        if (isAdmin) {
+          $scope.swarmMode = new SwarmMode(data.swarm);
+        }
       } else {
         extractSwarmInfo(data.info);
       }
@@ -96,6 +106,108 @@ function ($q, $scope, SystemService, NodeService, Pagination, Notifications) {
     .finally(function final() {
       $('#loadingViewSpinner').hide();
     });
+  }
+
+  $scope.rotateManagerToken = function() {
+    ModalService.confirm({
+      title: 'Are you sure ?',
+      message: 'You are about to rotate the manager join token',
+      buttons: {
+        confirm: {
+          label: 'Rotate manager join token',
+          className: 'btn-primary'
+        }
+      },
+      callback: function() {
+        updateSwarmMode($scope.swarmMode, {
+          rotateManagerToken: true
+        });
+      }
+    });
+  };
+  $scope.rotateWorkerToken = function() {
+    ModalService.confirm({
+      title: 'Are you sure ?',
+      message: 'You are about to rotate the worker join token',
+      buttons: {
+        confirm: {
+          label: 'Rotate worker join token',
+          className: 'btn-primary'
+        }
+      },
+      callback: function() {
+        updateSwarmMode($scope.swarmMode, {
+          rotateWorkerToken: true
+        });
+      }
+    });
+  };
+  $scope.rotateAutoLockToken = function() {
+    ModalService.confirm({
+      title: 'Are you sure ?',
+      message: 'You are about to rotate the manager unlock key',
+      buttons: {
+        confirm: {
+          label: 'Rotate manager unlock key',
+          className: 'btn-primary'
+        }
+      },
+      callback: function() {
+        updateSwarmMode($scope.swarmMode, {
+          rotateManagerUnlockKey: true
+        });
+      }
+    });
+  };
+
+  function updateSwarmMode(model, opt) {
+    var request = Swarm.update({
+      version: model.Version,
+      rotateManagerToken: opt.rotateManagerToken,
+      rotateWorkerToken: opt.rotateWorkerToken,
+      rotateManagerUnlockKey: opt.rotateManagerUnlockKey
+    }, new SwarmModelToConfig(model)).$promise;
+
+    return request.then(function(response) {
+      initView();
+    });
+  }
+
+
+  function SwarmModelToConfig(model) {
+    var data = {
+      ID: model.ID,
+      Version: {
+        Index: model.Version
+      },
+      Spec: {
+        Labels: model.Labels,
+        Orchestration: {
+          TaskHistoryRetentionLimit: model.TaskHistoryRetentionLimit
+        },
+        Raft: {
+          SnapshotInterval: model.SnapshotInterval,
+          KeepOldSnapshots: model.KeepOldSnapshots,
+          LogEntriesForSlowFollowers: model.LogEntriesForSlowFollowers,
+          ElectionTick: model.ElectionTick,
+          HeartbeatTick: model.HeartbeatTick
+        },
+        Dispatcher: {
+          HeartbeatPeriod: model.HeartbeatPeriod
+        },
+        CAConfig: {
+          NodeCertExpiry: model.NodeCertExpiry
+        },
+        TaskDefaults: model.TaskDefaults,
+        EncryptionConfig: {
+          AutoLockManagers: model.AutoLockManagers
+        }
+      },
+      TLSInfo: model.TLSInfo,
+      RootRotationInProgress: model.RootRotationInProgress,
+      JoinTokens: model.JoinTokens
+    };
+    return data;
   }
 
   initView();

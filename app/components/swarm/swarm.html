@@ -65,6 +65,106 @@
   </div>
 </div>
 
+<div class="row" ng-if="isAdmin && applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <rd-widget>
+            <rd-widget-header icon="fa-object-group" title="Swarm mode tokens"></rd-widget-header>
+            <rd-widget-body classes="no-padding">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Manager join token</td>
+                            <td></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" ng-click="showManagerToken()">Show Manager token</button>
+                                <button class="btn btn-primary btn-sm" ng-click="rotateManagerToken()">Rotate Manager token</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Worker join token</td>
+                            <td></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" ng-click="showManagerToken()">Show worker token</button>
+                                <button class="btn btn-primary btn-sm" ng-click="rotateWorkerToken()">Rotate Worker token</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Auto-lock token</td>
+                            <td>
+                                Use auto-lock
+                                <input type="checkbox" name="autolock_managers" ng-model="swarmMode.AutoLockManagers" ng-change="">
+                            </td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" ng-click="showManagerToken()" ng-if="swarmMode.AutoLockManagers">Show worker token</button>
+                                <button class="btn btn-primary btn-sm" ng-click="rotateAutoLockToken()" ng-if="swarmMode.AutoLockManagers">Rotate Auto lock token</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </rd-widget-body>
+        </rd-widget>
+    </div>
+</div>
+
+<div class="row" ng-if="isAdmin && applicationState.endpoint.mode.provider === 'DOCKER_SWARM_MODE'">
+  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+    <form ng-submit="updateSwarmMode()">
+        <rd-widget>
+          <rd-widget-header icon="fa-object-group" title="Swarm configuration"></rd-widget-header>
+          <rd-widget-body classes="no-padding">
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td>Task history retention</td>
+                  <td>
+                     <input class="input-sm" type="number" ng-model="swarmMode.TaskHistoryRetentionLimit" ng-min="0" required/>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Snapshot interval</td>
+                  <td>
+                      <input class="input-sm" type="number" ng-model="swarmMode.SnapshotInterval" ng-min="0" required/>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Keep old snapshots</td>
+                  <td>
+                    <input class="input-sm" type="number" ng-model="swarmMode.KeepOldSnapshots" ng-min="0" required/>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Log entries for slow followers</td>
+                  <td>
+                    <input class="input-sm" type="number" ng-model="swarmMode.LogEntriesForSlowFollowers" ng-min="0" required/>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Heartbeat period</td>
+                  <td>
+                    <input class="input-sm" type="number" ng-model="swarmMode.HeartbeatPeriod" ng-min="0" required/>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </rd-widget-body>
+          <rd-widget-footer>
+            <div class="btn-toolbar" role="toolbar">
+              <div class="btn-group" role="group">
+                <button type="submit" class="btn btn-primary btn-sm">Apply changes</button>
+                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a ng-click="resetChangesSwarmMode()">Reset changes</a></li>
+                </ul>
+              </div>
+            </div>
+          </rd-widget-footer>
+        </rd-widget>
+    </form>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12" ng-if="applicationState.endpoint.mode.provider === 'DOCKER_SWARM'">
     <rd-widget>
